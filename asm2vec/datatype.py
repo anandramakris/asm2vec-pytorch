@@ -111,7 +111,7 @@ class Function:
         return cls(insts, blocks, meta)
     def tokens(self):
         return [token for inst in self.insts for token in inst.tokens()]
-    def random_walk(self, num=3):
+    def random_walk(self, num=10):
         return [self._random_walk() for _ in range(num)]
     def _random_walk(self):
         current, visited, seq = self.blocks[0], [], []
