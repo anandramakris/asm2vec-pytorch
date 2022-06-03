@@ -15,17 +15,18 @@ class AsmDataset(Dataset):
     def __getitem__(self, index):
         return self.x[index], self.y[index]
 
+"""
 def load_data(paths, limit=None):
     if type(paths) is not list:
         paths = [paths]
-   
+
     filenames = []
     for path in paths:
         if os.path.isdir(path):
             filenames += [Path(path) / filename for filename in sorted(os.listdir(path)) if os.path.isfile(Path(path) / filename)]
         else:
             filenames += [Path(path)]
-    
+
     functions, tokens = [], Tokens()
     for i, filename in enumerate(filenames):
         if limit and i >= limit:
@@ -34,8 +35,42 @@ def load_data(paths, limit=None):
             fn = Function.load(f.read())
             functions.append(fn)
             tokens.add(fn.tokens())
-    
+
     return functions, tokens
+"""
+
+def load_data_angr(paths, limit=None):
+    if type(paths) is not list:
+        paths = [paths]
+
+    filenames = []
+    for path in paths:
+        if os.path.isdir(path):
+            filenames += [Path(path) / filename for filename in sorted(os.listdir(path)) if os.path.isfile(Path(path) / filename)]
+        else:
+            filenames += [Path(path)]
+
+    funclist = []
+    tokens = Tokens()
+
+    for i, filename in enumerate(filenames):
+        if limit and i >= limit:
+            break
+
+        p = angr.Project(filename, load_options={'auto_load_libs': False})
+
+        cfg = p.analyses.CFGFast()
+
+        for address in cfg.kb.functions:
+            function = cfg.kb.functions[address]
+            funclist.append(function)
+
+            block = p.factory.block(address)
+            for insn in block.capstone.insns:
+                args = insn.op_str.split(', ')
+                tokens.add([insn.mnemonic] + args)
+
+    return funclist, tokens
 
 def preprocess(functions, tokens):
     x, y = [], []
@@ -81,7 +116,7 @@ def train(
             neg = tokens.sample(inp.shape[0], neg_sample_num)
             loss = model(inp.to(device), pos.to(device), neg.to(device))
             loss_sum, loss_count = loss_sum + loss, loss_count + 1
-            
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -153,4 +188,3 @@ def show_probs(x, y, probs, tokens, limit=None, pretty=False):
 
 def accuracy(y, probs):
     return torch.mean(torch.tensor([torch.sum(probs[i][yi]) for i, yi in enumerate(y)]))
-
