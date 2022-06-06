@@ -5,7 +5,7 @@ import angr
 import random
 from torch.utils.data import DataLoader, Dataset
 from pathlib import Path
-from .datatype import Tokens, Function, Instruction
+from .datatype import Tokens, Function, Instruction, BasicBlock
 from .model import ASM2VEC
 
 class AsmDataset(Dataset):
