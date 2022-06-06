@@ -2,6 +2,7 @@ import os
 import time
 import torch
 import angr
+import random
 from torch.utils.data import DataLoader, Dataset
 from pathlib import Path
 from .datatype import Tokens, Function, Instruction
@@ -64,12 +65,20 @@ def load_data_angr(paths, limit=None):
 
         for address in cfg.kb.functions:
             function = cfg.kb.functions[address]
-            funclist.append(function)
 
-            block = p.factory.block(address)
-            for insn in block.capstone.insns:
-                args = insn.op_str.split(', ')
-                tokens.add([insn.mnemonic] + args)
+            insns = []
+            blocks = []
+            for block in function.blocks:
+                bb = BasicBlock()
+                for insn in block.capstone.insns:
+                    args = insn.op_str.split(', ')
+                    tokens.add([insn.mnemonic] + args)
+                    bb.add(Instruction(insn.mnemonic, args))
+                    insns.add(Instruction(insn.mnemonic, args))
+                blocks.add(bb)
+
+            func = Function(insns, blocks, {})
+            funclist.append(function)
 
     return funclist, tokens
 
