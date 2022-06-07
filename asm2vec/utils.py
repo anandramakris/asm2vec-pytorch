@@ -72,13 +72,21 @@ def load_data_angr(paths, limit=None):
                 bb = BasicBlock()
                 for insn in block.capstone.insns:
                     args = insn.op_str.split(', ')
-                    tokens.add([insn.mnemonic] + args)
+                    token = [insn.mnemonic] + args
+
+                    if len(token) < 3:
+                        token.append('')
+                        if len(token) < 2:
+                            token.append('')
+
+                    tokens.add(token)
+
                     bb.add(Instruction(insn.mnemonic, args))
-                    insns.add(Instruction(insn.mnemonic, args))
-                blocks.add(bb)
+                    insns.append(Instruction(insn.mnemonic, args))
+                blocks.append(bb)
 
             func = Function(insns, blocks, {})
-            funclist.append(function)
+            funclist.append(func)
 
     return funclist, tokens
 
