@@ -72,15 +72,11 @@ def load_data_angr(paths, limit=None):
                 bb = BasicBlock()
                 for insn in block.capstone.insns:
                     args = insn.op_str.split(', ')
-                    token = [insn.mnemonic] + args
 
-                    if len(token) < 3:
-                        token.append('')
-                        if len(token) < 2:
-                            token.append('')
+                    if len(args) < 2:
+                        args.append('')
 
-                    tokens.add(token)
-
+                    tokens.add([insn.mnemonic] + args)
                     bb.add(Instruction(insn.mnemonic, args))
                     insns.append(Instruction(insn.mnemonic, args))
                 blocks.append(bb)
@@ -97,6 +93,7 @@ def preprocess(functions, tokens):
             for j in range(1, len(seq) - 1):
                 x.append([i] + [tokens[token].index for token in seq[j-1].tokens() + seq[j+1].tokens()])
                 y.append([tokens[token].index for token in seq[j].tokens()])
+
     return torch.tensor(x), torch.tensor(y)
 
 def train(
